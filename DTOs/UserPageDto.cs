@@ -1,0 +1,11 @@
+namespace EcommerceAPI.DTOs
+{
+    public class UserPageDto
+    {
+        public IEnumerable<UserDto> Items { get; set; } = Enumerable.Empty<UserDto>();
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
+        public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    }
+}

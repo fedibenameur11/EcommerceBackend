@@ -40,11 +40,24 @@ namespace EcommerceAPI.Services
         public async Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId)
             => (await _orderRepo.GetByUserIdAsync(userId)).Select(ToDto);
 
-        public async Task<IEnumerable<OrderDto>> GetAllAsync()
-            => (await _orderRepo.GetAllAsync()).Select(ToDto);
+        public async Task<OrderPageDto> GetAllAsync(int page = 1, int pageSize = 10)
+        {
+            if (page < 1 || pageSize is < 1 or > 100) throw new ArgumentException("Pagination invalide.");
+            var result = await _orderRepo.GetPagedAsync(page, pageSize);
+            return new OrderPageDto
+            {
+                Items = result.Items.Select(ToDto),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
+        }
 
         public async Task<OrderDto> CreateAsync(CreateOrderDto dto, int userId)
         {
+            if (string.IsNullOrWhiteSpace(dto.ShippingAddress)) throw new ArgumentException("L'adresse de livraison est obligatoire.");
+            if (dto.Items == null || dto.Items.Count == 0) throw new ArgumentException("Le panier ne peut pas être vide.");
+
             await using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
@@ -104,6 +117,17 @@ namespace EcommerceAPI.Services
         {
             var order = await _orderRepo.GetByIdAsync(id);
             if (order == null || (!isAdmin && order.UserId != userId) || order.Status != OrderStatus.Pending) return false;
+
+            foreach (var item in order.Items)
+            {
+                var product = await _productRepo.GetByIdAsync(item.ProductId);
+                if (product != null)
+                {
+                    product.StockQuantity += item.Quantity;
+                    _productRepo.Update(product);
+                }
+            }
+
             order.Status = OrderStatus.Cancelled;
             _orderRepo.Update(order);
             await _orderRepo.SaveChangesAsync();

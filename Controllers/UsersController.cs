@@ -28,8 +28,10 @@ namespace EcommerceAPI.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
-            => Ok(await _service.GetAllAsync());
+        public async Task<ActionResult<UserPageDto>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+            => Ok(await _service.GetAllAsync(page, pageSize));
 
         [HttpGet("{id:int}")]
         [Authorize(Roles = "Admin")]

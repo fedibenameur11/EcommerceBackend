@@ -103,7 +103,7 @@ namespace EcommerceAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("DeliveredDate")
+                    b.Property<DateTime>("DeliveredDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("OrderDate")
@@ -113,7 +113,7 @@ namespace EcommerceAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("ShippedDate")
+                    b.Property<DateTime>("ShippedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ShippingAddress")
@@ -150,6 +150,9 @@ namespace EcommerceAPI.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("numeric");
 
@@ -180,6 +183,9 @@ namespace EcommerceAPI.Migrations
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -218,6 +224,9 @@ namespace EcommerceAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -234,6 +243,9 @@ namespace EcommerceAPI.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });

@@ -10,6 +10,7 @@ namespace EcommerceAPI.Models
         public string PhoneNumber { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public UserRole Role { get; set; } = UserRole.Customer;
+        public bool IsActive { get; set; } = true;
 
         // Relations
         public ICollection<Order> Orders { get; set; } = new List<Order>();

@@ -1,5 +1,4 @@
 using EcommerceAPI.DTOs;
-using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
 
@@ -12,6 +11,8 @@ namespace EcommerceAPI.Services
 
         public async Task<ProductPageDto> GetAllAsync(int page, int pageSize, string? search, int? categoryId)
         {
+            if (page < 1) throw new ArgumentException("page doit être supérieur à 0.");
+            if (pageSize is < 1 or > 100) throw new ArgumentException("pageSize doit être entre 1 et 100.");
             var result = await _repo.GetPagedAsync(page, pageSize, search, categoryId);
             return new ProductPageDto
             {
@@ -35,6 +36,9 @@ namespace EcommerceAPI.Services
 
         public async Task<ProductDto> CreateAsync(ProductDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Name)) throw new ArgumentException("Le nom du produit est obligatoire.");
+            if (dto.Price < 0) throw new ArgumentException("Le prix doit être supérieur ou égal à zéro.");
+            if (dto.StockQuantity < 0) throw new ArgumentException("Le stock doit être supérieur ou égal à zéro.");
             var entity = new Product
             {
                 Name = dto.Name,
@@ -52,6 +56,9 @@ namespace EcommerceAPI.Services
 
         public async Task<bool> UpdateAsync(int id, ProductDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Name)) throw new ArgumentException("Le nom du produit est obligatoire.");
+            if (dto.Price < 0) throw new ArgumentException("Le prix doit être supérieur ou égal à zéro.");
+            if (dto.StockQuantity < 0) throw new ArgumentException("Le stock doit être supérieur ou égal à zéro.");
             var p = await _repo.GetByIdAsync(id);
             if (p == null) return false;
             p.Name = dto.Name;
@@ -69,7 +76,8 @@ namespace EcommerceAPI.Services
         {
             var p = await _repo.GetByIdAsync(id);
             if (p == null) return false;
-            _repo.Remove(p);
+            p.IsActive = false;
+            _repo.Update(p);
             await _repo.SaveChangesAsync();
             return true;
         }

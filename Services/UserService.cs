@@ -16,8 +16,18 @@ namespace EcommerceAPI.Services
             return user == null ? null : ToDto(user);
         }
 
-        public async Task<IEnumerable<UserDto>> GetAllAsync()
-            => (await _repository.GetAllAsync()).Select(ToDto);
+        public async Task<UserPageDto> GetAllAsync(int page = 1, int pageSize = 10)
+        {
+            if (page < 1 || pageSize is < 1 or > 100) throw new ArgumentException("Pagination invalide.");
+            var result = await _repository.GetPagedAsync(page, pageSize);
+            return new UserPageDto
+            {
+                Items = result.Items.Select(ToDto),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
+        }
 
         public async Task<bool> UpdateAsync(int id, UpdateUserDto dto)
         {
@@ -36,7 +46,8 @@ namespace EcommerceAPI.Services
         {
             var user = await _repository.GetByIdAsync(id);
             if (user == null) return false;
-            _repository.Remove(user);
+            user.IsActive = false;
+            _repository.Update(user);
             await _repository.SaveChangesAsync();
             return true;
         }

@@ -4,6 +4,7 @@ using System.Text;
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EcommerceAPI.Services
@@ -12,11 +13,13 @@ namespace EcommerceAPI.Services
     {
         private readonly IUserRepository _users;
         private readonly IConfiguration _configuration;
+        private readonly PasswordHasher<User> _hasher;
 
         public AuthService(IUserRepository users, IConfiguration configuration)
         {
             _users = users;
             _configuration = configuration;
+            _hasher = new PasswordHasher<User>();
         }
 
         public async Task<UserDto?> RegisterAsync(RegisterDto dto)
@@ -29,7 +32,7 @@ namespace EcommerceAPI.Services
                 FirstName = dto.FirstName.Trim(),
                 LastName = dto.LastName.Trim(),
                 Email = email,
-                Password = dto.Password,
+                Password = _hasher.HashPassword(null!, dto.Password),
                 PhoneNumber = dto.PhoneNumber.Trim(),
                 Address = dto.Address.Trim(),
                 Role = UserRole.Customer
@@ -44,7 +47,10 @@ namespace EcommerceAPI.Services
         {
             var email = dto.Email.Trim().ToLowerInvariant();
             var user = await _users.GetByEmailAsync(email);
-            if (user == null || user.Password != dto.Password) return null;
+            if (user == null || !user.IsActive) return null;
+
+            var result = _hasher.VerifyHashedPassword(user, user.Password, dto.Password);
+            if (result == PasswordVerificationResult.Failed) return null;
 
             var jwt = _configuration.GetSection("Jwt");
             var key = jwt["Key"];

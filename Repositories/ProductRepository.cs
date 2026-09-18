@@ -12,7 +12,9 @@ namespace EcommerceAPI.Repositories
         public async Task<(IEnumerable<Product> Items, int TotalCount)> GetPagedAsync(
             int page, int pageSize, string? search, int? categoryId)
         {
-            var query = _db.Products.AsNoTracking().AsQueryable();
+            var query = _db.Products.AsNoTracking()
+                .Where(p => p.IsActive)
+                .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(p => p.Name.ToLower().Contains(search.ToLower())
                     || p.Description.ToLower().Contains(search.ToLower()));
@@ -28,7 +30,7 @@ namespace EcommerceAPI.Repositories
         }
 
         public async Task<Product?> GetByIdAsync(int id)
-            => await _db.Products.FindAsync(id);
+            => await _db.Products.FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
 
         public async Task AddAsync(Product product)
         {

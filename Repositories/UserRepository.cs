@@ -18,6 +18,17 @@ namespace EcommerceAPI.Repositories
         public async Task<IEnumerable<User>> GetAllAsync()
             => await _db.Users.AsNoTracking().ToListAsync();
 
+        public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        {
+            var query = _db.Users.AsNoTracking().Where(u => u.IsActive);
+            var totalCount = await query.CountAsync();
+            var items = await query.OrderBy(u => u.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            return (items, totalCount);
+        }
+
         public async Task AddAsync(User user)
         {
             await _db.Users.AddAsync(user);

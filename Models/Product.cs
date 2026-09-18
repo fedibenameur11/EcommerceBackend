@@ -8,6 +8,7 @@ namespace EcommerceAPI.Models
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
 
         // Foreign Keys
         public int CategoryId { get; set; }

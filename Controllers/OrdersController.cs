@@ -32,8 +32,10 @@ namespace EcommerceAPI.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<OrderDto>>> GetAll()
-            => Ok(await _svc.GetAllAsync());
+        public async Task<ActionResult<OrderPageDto>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+            => Ok(await _svc.GetAllAsync(page, pageSize));
 
         [HttpPost]
         public async Task<ActionResult<OrderDto>> Create([FromBody] CreateOrderDto dto)

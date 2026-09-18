@@ -7,6 +7,7 @@ namespace EcommerceAPI.Repositories
         Task<Order?> GetByIdAsync(int id);
         Task<IEnumerable<Order>> GetByUserIdAsync(int userId);
         Task<IEnumerable<Order>> GetAllAsync();
+        Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(int page, int pageSize);
         Task AddAsync(Order order);
         void Update(Order order);
         Task<int> SaveChangesAsync();

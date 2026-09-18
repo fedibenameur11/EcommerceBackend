@@ -7,6 +7,7 @@ namespace EcommerceAPI.Repositories
         Task<User?> GetByIdAsync(int id);
         Task<User?> GetByEmailAsync(string email);
         Task<IEnumerable<User>> GetAllAsync();
+        Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize);
         Task AddAsync(User user);
         void Update(User user);
         void Remove(User user);
