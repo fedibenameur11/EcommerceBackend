@@ -1,6 +1,7 @@
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
+using Microsoft.AspNetCore.Identity;
 
 namespace EcommerceAPI.Services
 {
@@ -40,6 +41,29 @@ namespace EcommerceAPI.Services
             _repository.Update(user);
             await _repository.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<IEnumerable<UserDto>> GetDeliveryPeopleAsync()
+            => (await _repository.GetActiveByRoleAsync(UserRole.Delivery)).Select(ToDto);
+
+        public async Task<UserDto?> CreateDeliveryPersonAsync(CreateDeliveryPersonDto dto)
+        {
+            var email = dto.Email.Trim().ToLowerInvariant();
+            if (await _repository.GetByEmailAsync(email) != null) return null;
+
+            var user = new User
+            {
+                FirstName = dto.FirstName.Trim(),
+                LastName = dto.LastName.Trim(),
+                Email = email,
+                PhoneNumber = dto.PhoneNumber.Trim(),
+                Address = string.Empty,
+                Role = UserRole.Delivery
+            };
+            user.Password = new PasswordHasher<User>().HashPassword(user, dto.Password);
+            await _repository.AddAsync(user);
+            await _repository.SaveChangesAsync();
+            return ToDto(user);
         }
 
         public async Task<bool> DeleteAsync(int id)

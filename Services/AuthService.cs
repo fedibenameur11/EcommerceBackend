@@ -26,6 +26,10 @@ namespace EcommerceAPI.Services
         {
             var email = dto.Email.Trim().ToLowerInvariant();
             if (await _users.GetByEmailAsync(email) != null) return null;
+            if (dto.IsSeller && dto.IsDelivery)
+                throw new ArgumentException("Choisissez un seul type de compte : vendeur ou livreur.");
+            if (dto.IsDelivery && string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                throw new ArgumentException("Le numÃ©ro de tÃ©lÃ©phone est obligatoire pour un compte livreur.");
 
             var user = new User
             {
@@ -35,7 +39,7 @@ namespace EcommerceAPI.Services
                 Password = _hasher.HashPassword(null!, dto.Password),
                 PhoneNumber = dto.PhoneNumber.Trim(),
                 Address = dto.Address.Trim(),
-                Role = UserRole.Customer
+                Role = dto.IsDelivery ? UserRole.Delivery : dto.IsSeller ? UserRole.Seller : UserRole.Customer
             };
 
             await _users.AddAsync(user);
@@ -55,7 +59,7 @@ namespace EcommerceAPI.Services
             var jwt = _configuration.GetSection("Jwt");
             var key = jwt["Key"];
             if (string.IsNullOrWhiteSpace(key))
-                throw new InvalidOperationException("La clé JWT n'est pas configurée.");
+                throw new InvalidOperationException("La clï¿½ JWT n'est pas configurï¿½e.");
 
             var minutes = int.TryParse(jwt["ExpiresInMinutes"], out var value) ? value : 60;
             var expiresAt = DateTime.UtcNow.AddMinutes(minutes);

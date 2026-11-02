@@ -13,6 +13,8 @@ namespace EcommerceAPI.Models
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalPrice { get; set; }
+        /// <summary>Pointure ou taille choisie (null = produit sans taille).</summary>
+        public string? Size { get; set; }
 
         // Relations
         public Order Order { get; set; } = null!;

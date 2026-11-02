@@ -18,6 +18,12 @@ namespace EcommerceAPI.Repositories
         public async Task<IEnumerable<User>> GetAllAsync()
             => await _db.Users.AsNoTracking().ToListAsync();
 
+        public async Task<IEnumerable<User>> GetActiveByRoleAsync(UserRole role)
+            => await _db.Users.AsNoTracking()
+                .Where(u => u.IsActive && u.Role == role)
+                .OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+                .ToListAsync();
+
         public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
             var query = _db.Users.AsNoTracking().Where(u => u.IsActive);

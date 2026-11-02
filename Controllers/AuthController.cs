@@ -19,7 +19,7 @@ namespace EcommerceAPI.Controllers
         public async Task<ActionResult<UserDto>> Register([FromBody] RegisterDto dto)
         {
             var user = await _authService.RegisterAsync(dto);
-            if (user == null) return Conflict("Cette adresse e-mail existe dÈj‡.");
+            if (user == null) return Conflict("Cette adresse e-mail existe d√©j√†.");
             return Ok(user);
         }
 

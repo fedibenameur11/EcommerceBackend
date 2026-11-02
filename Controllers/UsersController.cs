@@ -33,6 +33,21 @@ namespace EcommerceAPI.Controllers
             [FromQuery] int pageSize = 10)
             => Ok(await _service.GetAllAsync(page, pageSize));
 
+        /// <summary>Admin : livreurs actifs (liste déroulante d'affectation).</summary>
+        [HttpGet("delivery")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> DeliveryPeople()
+            => Ok(await _service.GetDeliveryPeopleAsync());
+
+        /// <summary>Admin : crée un compte livreur.</summary>
+        [HttpPost("delivery")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserDto>> CreateDeliveryPerson(CreateDeliveryPersonDto dto)
+        {
+            var created = await _service.CreateDeliveryPersonAsync(dto);
+            return created == null ? Conflict("Cette adresse e-mail existe déjà.") : Ok(created);
+        }
+
         [HttpGet("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserDto>> GetById(int id)

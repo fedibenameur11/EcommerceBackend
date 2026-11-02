@@ -12,6 +12,12 @@ namespace EcommerceAPI.Repositories
         public async Task<IEnumerable<Category>> GetAllAsync()
             => await _db.Categories.AsNoTracking().ToListAsync();
 
+        public async Task<Dictionary<int, int>> GetProductCountsAsync()
+            => await _db.Products.AsNoTracking().Where(p => p.IsActive)
+                .GroupBy(p => p.CategoryId)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Key, x => x.Count);
+
         public async Task<Category?> GetByIdAsync(int id)
             => await _db.Categories.FindAsync(id);
 

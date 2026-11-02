@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using EcommerceAPI.Services;
+using EcommerceAPI.Repositories;
 using EcommerceAPI.DTOs;
+using System.Security.Claims;
 
 namespace EcommerceAPI.Controllers
 {
@@ -12,18 +14,43 @@ namespace EcommerceAPI.Controllers
         private readonly IProductService _svc;
         public ProductsController(IProductService svc) => _svc = svc;
 
+        /// <summary>
+        /// Liste pagin√©e. Filtres : search, categoryId, minPrice, maxPrice, brand, gender, color, size, minRating.
+        /// Tri : default | price-asc | price-desc | name | newest.
+        /// </summary>
         [HttpGet]
         public async Task<ActionResult<ProductPageDto>> GetAll(
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10,
+            [FromQuery] int pageSize = 12,
             [FromQuery] string? search = null,
-            [FromQuery] int? categoryId = null)
+            [FromQuery] int? categoryId = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] string? brand = null,
+            [FromQuery] string? gender = null,
+            [FromQuery] string? color = null,
+            [FromQuery] string? size = null,
+            [FromQuery] bool? onSale = null,
+            [FromQuery] int? minRating = null,
+            [FromQuery] string? sort = null)
         {
-            if (page < 1 || pageSize is < 1 or > 100)
-                return BadRequest("page doit Ítre supÈrieur ‡ 0 et pageSize doit Ítre compris entre 1 et 100.");
-            var list = await _svc.GetAllAsync(page, pageSize, search, categoryId);
+            var list = await _svc.GetAllAsync(new ProductQuery
+            {
+                Page = page, PageSize = pageSize, Search = search, CategoryId = categoryId,
+                MinPrice = minPrice, MaxPrice = maxPrice, Brand = brand, Gender = gender, Color = color, Size = size, OnSale = onSale, MinRating = minRating, Sort = sort
+            });
             return Ok(list);
         }
+
+        /// <summary>Marques disponibles (pour le filtre).</summary>
+        [HttpGet("brands")]
+        public async Task<ActionResult<IEnumerable<string>>> Brands() => Ok(await _svc.GetBrandsAsync());
+
+        /// <summary>Suggestions affich√©es pendant la saisie dans la barre de recherche.</summary>
+        [HttpGet("suggestions")]
+        public async Task<ActionResult<IEnumerable<ProductSuggestionDto>>> Suggestions(
+            [FromQuery] string q = "", [FromQuery] int take = 6)
+            => Ok(await _svc.GetSuggestionsAsync(q, take));
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ProductDto>> Get(int id)
@@ -33,28 +60,44 @@ namespace EcommerceAPI.Controllers
             return Ok(item);
         }
 
+        /// <summary>Produits du vendeur connect√©.</summary>
+        [HttpGet("mine")]
+        [Authorize(Roles = "Seller")]
+        public async Task<ActionResult<ProductPageDto>> Mine(
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+            => Ok(await _svc.GetAllAsync(new ProductQuery
+            {
+                Page = page, PageSize = pageSize, SellerId = CurrentUserId()
+            }));
+
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<ActionResult<ProductDto>> Create([FromBody] ProductDto dto)
         {
-            var created = await _svc.CreateAsync(dto);
+            var created = await _svc.CreateAsync(dto, SellerScope());
             return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> Update(int id, [FromBody] ProductDto dto)
         {
-            if (!await _svc.UpdateAsync(id, dto)) return NotFound();
+            if (!await _svc.UpdateAsync(id, dto, SellerScope())) return NotFound();
             return NoContent();
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> Delete(int id)
         {
-            if (!await _svc.DeleteAsync(id)) return NotFound();
+            if (!await _svc.DeleteAsync(id, SellerScope())) return NotFound();
             return NoContent();
         }
+
+        private int CurrentUserId()
+            => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        /// <summary>Id du vendeur si l'utilisateur est un vendeur (restreint √† ses produits), null pour un admin.</summary>
+        private int? SellerScope() => User.IsInRole("Seller") ? CurrentUserId() : null;
     }
 }

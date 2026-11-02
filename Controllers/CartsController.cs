@@ -8,7 +8,7 @@ namespace EcommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Customer,Admin")]
+    [Authorize(Roles = "Customer,Seller,Admin")]
     public class CartsController : ControllerBase
     {
         private readonly ICartService _svc;

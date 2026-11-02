@@ -32,6 +32,7 @@ namespace EcommerceAPI.Services
             if (item.Quantity <= 0) throw new ArgumentOutOfRangeException(nameof(item.Quantity));
             var product = await _productRepo.GetByIdAsync(item.ProductId);
             if (product == null) throw new KeyNotFoundException("Produit introuvable.");
+            if (product.SellerId == userId) throw new InvalidOperationException("Vous ne pouvez pas acheter votre propre produit.");
             var cart = await _cartRepo.GetByUserIdAsync(userId);
             if (cart == null)
             {
@@ -44,13 +45,13 @@ namespace EcommerceAPI.Services
             {
                 existing.Quantity += item.Quantity;
                 if (existing.Quantity > product.StockQuantity)
-                    throw new InvalidOperationException("La quantité demandée dépasse le stock disponible.");
+                    throw new InvalidOperationException("La quantitÃ© demandÃ©e dÃ©passe le stock disponible.");
             }
             else
             {
                 if (item.Quantity > product.StockQuantity)
-                    throw new InvalidOperationException("La quantité demandée dépasse le stock disponible.");
-                cart.Items.Add(new CartItem { ProductId = item.ProductId, Quantity = item.Quantity, UnitPrice = product.Price });
+                    throw new InvalidOperationException("La quantitÃ© demandÃ©e dÃ©passe le stock disponible.");
+                cart.Items.Add(new CartItem { ProductId = item.ProductId, Quantity = item.Quantity, UnitPrice = product.CurrentPrice(DateTime.UtcNow) });
             }
 
             _cartRepo.Update(cart);
@@ -65,11 +66,11 @@ namespace EcommerceAPI.Services
             if (cart == null) return null;
             var item = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             if (item == null) return null;
-            if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity), "La quantité doit être supérieure à zéro.");
+            if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity), "La quantitÃ© doit Ãªtre supÃ©rieure Ã  zÃ©ro.");
             var product = await _productRepo.GetByIdAsync(productId);
             if (product == null) throw new KeyNotFoundException("Produit introuvable.");
             if (quantity > product.StockQuantity)
-                throw new InvalidOperationException("La quantité demandée dépasse le stock disponible.");
+                throw new InvalidOperationException("La quantitÃ© demandÃ©e dÃ©passe le stock disponible.");
             item.Quantity = quantity;
 
             _cartRepo.Update(cart);

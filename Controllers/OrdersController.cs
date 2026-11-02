@@ -8,7 +8,7 @@ namespace EcommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Customer,Admin")]
+    [Authorize(Roles = "Customer,Seller,Admin")]
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _svc;
@@ -48,6 +48,12 @@ namespace EcommerceAPI.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
             => await _svc.UpdateStatusAsync(id, dto) ? NoContent() : NotFound();
+
+        /// <summary>Admin : affecte la commande à un livreur (et l'accepte si elle était en attente).</summary>
+        [HttpPut("{id:int}/delivery")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignDelivery(int id, AssignDeliveryDto dto)
+            => await _svc.AssignDeliveryAsync(id, dto.DeliveryPersonId) ? NoContent() : NotFound();
 
         [HttpPost("{id:int}/cancel")]
         public async Task<IActionResult> Cancel(int id)

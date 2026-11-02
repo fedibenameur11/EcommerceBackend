@@ -14,8 +14,34 @@ namespace EcommerceAPI.Repositories
                         .Include(o => o.Items)
                         .FirstOrDefaultAsync(o => o.Id == id);
 
+        public async Task<Order?> GetDetailedByIdAsync(int id)
+            => await _db.Orders
+                        .AsNoTracking()
+                        .Include(o => o.User)
+                        .Include(o => o.DeliveryPerson)
+                        .Include(o => o.Items).ThenInclude(i => i.Product)
+                        .FirstOrDefaultAsync(o => o.Id == id);
+
         public async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
-            => await _db.Orders.Include(o => o.Items).Where(o => o.UserId == userId).ToListAsync();
+            => await _db.Orders
+                        .AsNoTracking()
+                        .Include(o => o.User)
+                        .Include(o => o.DeliveryPerson)
+                        .Include(o => o.Items).ThenInclude(i => i.Product)
+                        .Where(o => o.UserId == userId)
+                        .OrderByDescending(o => o.OrderDate)
+                        .ToListAsync();
+
+        public async Task<IEnumerable<Order>> GetByDeliveryPersonIdAsync(int deliveryPersonId)
+            => await _db.Orders
+                        .AsNoTracking()
+                        .Include(o => o.User)
+                        .Include(o => o.DeliveryPerson)
+                        .Include(o => o.Items).ThenInclude(i => i.Product)
+                        .Where(o => o.DeliveryPersonId == deliveryPersonId && o.Status != OrderStatus.Cancelled
+                                    && o.DeliveryAssignment != DeliveryAssignmentStatus.Refused)
+                        .OrderByDescending(o => o.OrderDate)
+                        .ToListAsync();
 
         public async Task<IEnumerable<Order>> GetAllAsync()
             => await _db.Orders.Include(o => o.Items).ToListAsync();
@@ -24,7 +50,9 @@ namespace EcommerceAPI.Repositories
         {
             var query = _db.Orders.AsNoTracking();
             var totalCount = await query.CountAsync();
-            var items = await query.Include(o => o.Items)
+            var items = await query.Include(o => o.User)
+                .Include(o => o.DeliveryPerson)
+                .Include(o => o.Items).ThenInclude(i => i.Product)
                 .OrderByDescending(o => o.OrderDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

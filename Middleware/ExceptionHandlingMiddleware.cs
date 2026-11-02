@@ -22,22 +22,31 @@ namespace EcommerceAPI.Middleware
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, "Une erreur est survenue pendant le traitement de la requête.");
-                await WriteErrorAsync(context, exception);
+                var (statusCode, message) = Map(exception);
+
+                // Erreurs attendues (validation, stock, introuvable) : avertissement ; le reste : vraie erreur avec la trace
+                if (statusCode >= StatusCodes.Status500InternalServerError)
+                    _logger.LogError(exception, "Erreur serveur sur {Method} {Path} ({StatusCode})",
+                        context.Request.Method, context.Request.Path.Value, statusCode);
+                else
+                    _logger.LogWarning("RequÃªte refusÃ©e sur {Method} {Path} ({StatusCode}) : {Reason}",
+                        context.Request.Method, context.Request.Path.Value, statusCode, exception.Message);
+
+                await WriteErrorAsync(context, statusCode, message);
             }
         }
 
-        private static async Task WriteErrorAsync(HttpContext context, Exception exception)
+        private static (int StatusCode, string Message) Map(Exception exception) => exception switch
         {
-            var (statusCode, message) = exception switch
-            {
-                ArgumentException => (StatusCodes.Status400BadRequest, exception.Message),
-                KeyNotFoundException => (StatusCodes.Status404NotFound, exception.Message),
-                InvalidOperationException => (StatusCodes.Status409Conflict, exception.Message),
-                DbUpdateException => (StatusCodes.Status500InternalServerError, "Erreur lors de l'enregistrement des données."),
-                _ => (StatusCodes.Status500InternalServerError, "Une erreur interne est survenue.")
-            };
+            ArgumentException => (StatusCodes.Status400BadRequest, exception.Message),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, exception.Message),
+            InvalidOperationException => (StatusCodes.Status409Conflict, exception.Message),
+            DbUpdateException => (StatusCodes.Status500InternalServerError, "Erreur lors de l'enregistrement des donnÃ©es."),
+            _ => (StatusCodes.Status500InternalServerError, "Une erreur interne est survenue.")
+        };
 
+        private static async Task WriteErrorAsync(HttpContext context, int statusCode, string message)
+        {
             if (context.Response.HasStarted) return;
             context.Response.StatusCode = statusCode;
             context.Response.ContentType = "application/json";

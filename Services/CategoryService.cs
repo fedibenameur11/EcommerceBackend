@@ -12,13 +12,15 @@ namespace EcommerceAPI.Services
         public async Task<IEnumerable<CategoryDto>> GetAllAsync()
         {
             var items = await _repo.GetAllAsync();
+            var counts = await _repo.GetProductCountsAsync();
             return items.Select(c => new CategoryDto
             {
                 Id = c.Id,
                 Name = c.Name,
                 Description = c.Description,
-                ImageUrl = c.ImageUrl
-            });
+                ImageUrl = c.ImageUrl,
+                ProductCount = counts.GetValueOrDefault(c.Id)
+            }).ToList();
         }
 
         public async Task<CategoryDto?> GetByIdAsync(int id)

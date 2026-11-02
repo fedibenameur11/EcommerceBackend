@@ -14,11 +14,19 @@ namespace EcommerceAPI.Models
 
         // Relations
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+        /// <summary>Commandes affectées à ce livreur (rôle Delivery).</summary>
+        public ICollection<Order> DeliveryOrders { get; set; } = new List<Order>();
         public Cart Cart { get; set; } = null!;
+        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
     }
     public enum UserRole
     {
         Customer = 0,
-        Admin = 1
+        Admin = 1,
+        Seller = 2,
+        /// <summary>Livreur : reçoit les commandes affectées par l'admin et les livre.</summary>
+        Delivery = 3
     }
 }
